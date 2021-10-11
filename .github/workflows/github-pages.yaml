@@ -1,0 +1,38 @@
+name: CI
+on:
+  workflow_dispatch:
+    inputs:
+      trigger:
+        description: Type m to triggre manual jobs
+        required: false
+        default: ''
+  pull_request:
+    branches: [ master ]
+  push:
+    branches: [ master ]
+env:
+  NODE_VERSION: 16.x
+jobs:
+  github-pages:
+    if: github.event.inputs.trigger == ''
+      || !startsWith(github.event.inputs.trigger, 'm')
+      || !startsWith(github.event.inputs.trigger, 'M')
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v2
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+    - uses: actions/cache@v2
+      id: cache
+      with:
+        path: |
+          ~/.n*
+        key: ${{ runner.os }}-${{ hashFiles('**/package.json', '**/package-lock.json') }}
+    - run: npm i -E
+    - run: npm run github-pages
+    - name: Deploy 🚀 GitHub Pages
+      uses: JamesIves/github-pages-deploy-action@4.1.0
+      with:
+        branch: gh-pages # The branch the action should deploy to.
+        folder: src/.vuepress/dist # The folder the action should deploy.
